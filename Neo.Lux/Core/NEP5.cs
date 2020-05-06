@@ -209,7 +209,7 @@ namespace Neo.Lux.Core
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
-            var response = api.CallContract(from_key, ScriptHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount }, remark);
+            var response = api.CallContract(from_key, ScriptHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount }, null, null, remark);
             return response;
         }
 
