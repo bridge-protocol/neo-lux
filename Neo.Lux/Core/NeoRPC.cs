@@ -378,12 +378,12 @@ namespace Neo.Lux.Core
 
                 case NEONodesKind.COZ:
                     {
-                        if (port == 10331)
+                        if (port == 10331 || port == 10332)
                         {
                             port = 443;
                         }
 
-                        nodes = new string[5];
+                        nodes = new string[10];
                         for (int i = 0; i < nodes.Length; i++)
                         {                            
                             nodes[i] = $"http://seed{i}.cityofzion.io:{port}";
