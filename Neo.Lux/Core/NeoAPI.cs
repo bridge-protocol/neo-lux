@@ -7,6 +7,7 @@ using System.Numerics;
 using Neo.Lux.Utils;
 using Neo.Lux.VM;
 using System.Threading;
+using System.Text;
 
 namespace Neo.Lux.Core
 {
@@ -640,18 +641,18 @@ namespace Neo.Lux.Core
 
         }
 
-        public Transaction CallContract(KeyPair key, UInt160 scriptHash, object[] args, string attachSymbol = null, IEnumerable<Transaction.Output> attachTargets = null)
+        public Transaction CallContract(KeyPair key, UInt160 scriptHash, object[] args, string attachSymbol = null, IEnumerable<Transaction.Output> attachTargets = null, string remark = null)
         {
             var bytes = GenerateScript(scriptHash, args);
-            return CallContract(key, scriptHash, bytes, attachSymbol, attachTargets);
+            return CallContract(key, scriptHash, bytes, attachSymbol, attachTargets, remark);
         }
 
-        public Transaction CallContract(KeyPair key, UInt160 scriptHash, string operation, object[] args, string attachSymbol = null, IEnumerable<Transaction.Output> attachTargets = null)
+        public Transaction CallContract(KeyPair key, UInt160 scriptHash, string operation, object[] args, string attachSymbol = null, IEnumerable<Transaction.Output> attachTargets = null, string remark = null)
         {
-            return CallContract(key, scriptHash, new object[] { operation, args }, attachSymbol, attachTargets);
+            return CallContract(key, scriptHash, new object[] { operation, args }, attachSymbol, attachTargets, remark);
         }
 
-        public Transaction CallContract(KeyPair key, UInt160 scriptHash, byte[] bytes, string attachSymbol = null, IEnumerable<Transaction.Output> attachTargets = null)
+        public Transaction CallContract(KeyPair key, UInt160 scriptHash, byte[] bytes, string attachSymbol = null, IEnumerable<Transaction.Output> attachTargets = null, string remark = null)
         {
             List<Transaction.Input> inputs = null;
             List<Transaction.Output> outputs = null;
@@ -681,6 +682,10 @@ namespace Neo.Lux.Core
                 outputs = outputs != null ? outputs.ToArray() : null,
                 attributes = inputs == null ? (new TransactionAttribute[] { new TransactionAttribute(TransactionAttributeUsage.Script, key.address.AddressToScriptHash()) } ) : null
             };
+
+            //Add a unique
+            if (transaction.attributes == null && !String.IsNullOrEmpty(remark))
+                transaction.attributes = (new TransactionAttribute[] { new TransactionAttribute(TransactionAttributeUsage.Remark, Encoding.ASCII.GetBytes(remark)) });
 
             transaction.Sign(key);
 
