@@ -656,21 +656,36 @@ namespace Neo.Lux.Core
         {
             List<Transaction.Input> inputs = null;
             List<Transaction.Output> outputs = null;
+            List<TransactionAttribute> attributes = null;
 
-            if (attachSymbol == null)
+            if (string.IsNullOrEmpty(attachSymbol))
             {
-                attachSymbol = "GAS";
-            }   
-            
-            if (!string.IsNullOrEmpty(attachSymbol))
+                //Include a nonce regardless, if the user specified a remark we can use that and assume they will make it unique if necessary
+                string nonce = Guid.NewGuid().ToString().Substring(0, 4);
+                if (!string.IsNullOrEmpty(remark))
+                    nonce = remark;
+
+                //If we aren't going to attach any GAS to the transaction, we need to add the scripthash address as an attribute
+                //A nonce will also be required to prevent transaction collisions
+                attributes = new List<TransactionAttribute>()
+                {
+                    new TransactionAttribute(TransactionAttributeUsage.Script, key.address.AddressToScriptHash()),
+                    new TransactionAttribute(TransactionAttributeUsage.Remark, Encoding.ASCII.GetBytes(nonce))
+                };
+            }
+            else
             {
                 GenerateInputsOutputs(key, attachSymbol, attachTargets, out inputs, out outputs);
-
                 if (inputs.Count == 0)
                 {
                     throw new NeoException($"Not enough inputs for transaction");
                 }
+
+                //If a remark is specified, include it
+                if (!string.IsNullOrEmpty(remark))
+                    attributes = new List<TransactionAttribute>() { new TransactionAttribute(TransactionAttributeUsage.Remark, Encoding.ASCII.GetBytes(remark)) };
             }
+
 
             var transaction = new Transaction()
             {
@@ -680,12 +695,8 @@ namespace Neo.Lux.Core
                 gas = 0,
                 inputs = inputs != null ? inputs.ToArray() : null,
                 outputs = outputs != null ? outputs.ToArray() : null,
-                attributes = inputs == null ? (new TransactionAttribute[] { new TransactionAttribute(TransactionAttributeUsage.Script, key.address.AddressToScriptHash()) } ) : null
+                attributes = attributes != null ? attributes.ToArray() : null
             };
-
-            //Add a unique
-            if (transaction.attributes == null && !String.IsNullOrEmpty(remark))
-                transaction.attributes = (new TransactionAttribute[] { new TransactionAttribute(TransactionAttributeUsage.Remark, Encoding.ASCII.GetBytes(remark)) });
 
             transaction.Sign(key);
 
